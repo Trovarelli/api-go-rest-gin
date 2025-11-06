@@ -11,6 +11,7 @@ import (
 type AlunosRepository interface {
 	GetAll(ctx context.Context) ([]models.Aluno, error)
 	GetById(ctx context.Context, id int64) (models.Aluno, error)
+	GetByCPF(ctx context.Context, cpf string) (models.Aluno, error)
 	Create(ctx context.Context, aluno models.Aluno) (models.Aluno, error)
 	Update(ctx context.Context, aluno *models.Aluno) error
 	Delete(ctx context.Context, id int64) error
@@ -36,6 +37,16 @@ func (r *AlunosDB) GetById(ctx context.Context, id int64) (models.Aluno, error) 
 	var aluno models.Aluno
 
 	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&aluno).Error; err != nil {
+		return models.Aluno{}, err
+	}
+
+	return aluno, nil
+}
+
+func (r *AlunosDB) GetByCPF(ctx context.Context, cpf string) (models.Aluno, error) {
+	var aluno models.Aluno
+
+	if err := r.db.WithContext(ctx).Where("cpf = ?", cpf).First(&aluno).Error; err != nil {
 		return models.Aluno{}, err
 	}
 
