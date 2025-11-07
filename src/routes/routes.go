@@ -1,18 +1,24 @@
 package routes
 
 import (
-	"api-go-rest-gin/src/controllers"
+    "api-go-rest-gin/src/controllers"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
 )
 
+func SetupRouter(alunos *controllers.AlunosHandler) *gin.Engine {
+    r := gin.Default()
+    r.GET("/alunos", alunos.GetAll)
+    r.GET("/alunos/:id", alunos.GetById)
+    r.GET("/alunos/cpf/:cpf", alunos.GetByCPF)
+    r.POST("/alunos", alunos.Create)
+    r.PUT("/alunos/:id", alunos.Update)
+    r.DELETE("/alunos/:id", alunos.Delete)
+
+    return r
+}
+
 func HandleRequest(alunos *controllers.AlunosHandler) {
-	r := gin.Default()
-	r.GET("/alunos", alunos.GetAll)
-	r.GET("/alunos/:id", alunos.GetById)
-	r.GET("/alunos/cpf/:id", alunos.GetById)
-	r.POST("/alunos", alunos.Create)
-	r.PUT("/alunos/:id", alunos.Update)
-	r.DELETE("/alunos/:id", alunos.Delete)
-	r.Run()
+    r := SetupRouter(alunos)
+    r.Run()
 }

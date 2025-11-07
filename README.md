@@ -102,3 +102,54 @@ Como contribuir / próximos passos
 - Parametrizar porta do servidor e CORS
 - Melhorar logs e middlewares no Gin
 
+Testes
+- Objetivo
+  - Garantir testes claros, rápidos e confiáveis, separados por camadas, reaproveitando a mesma configuração de rotas usada em produção e isolando dependências via injeção.
+
+- Padrões e termos
+  - DRY (Don't Repeat Yourself): evitar duplicação de código/configuração.
+  - HTTP (HyperText Transfer Protocol): protocolo usado nas rotas testadas.
+  - API (Application Programming Interface): interface dos endpoints.
+  - DI (Dependency Injection): injetar dependências como repositórios para facilitar testes.
+  - CRUD (Create, Read, Update, Delete): operações básicas cobertas no repositório.
+  - DB (Database): banco de dados; aqui simulado em memória para testes do repositório.
+  - GORM (Go Object-Relational Mapping): ORM usado para persistência.
+  - DSN (Data Source Name): string de conexão do banco.
+  - CI (Continuous Integration): integração contínua onde os testes rodam.
+  - E2E (End-to-End): testes ponta a ponta; aqui simulamos HTTP sem precisar de DB real.
+
+- Estrutura por camadas
+  1) Helpers/Modelos (unitário)
+     - `src/helpers/normalize-string_test.go`
+     - `src/models/aluno_model_test.go`
+  2) Controllers (unitário)
+     - `src/controllers/aluno_controller_test.go`
+     - Cria `gin.Context` em memória e chama os handlers diretamente, com repositório fake injetado.
+  3) Rotas (integração HTTP)
+     - `src/routes/routes_test.go`
+     - Usa o roteador real via `routes.SetupRouter` e faz chamadas HTTP em memória (pacote `httptest`).
+  4) Repositório (integração de persistência)
+     - `src/repository/alunos_test.go`
+     - Testa `AlunosDB` real com SQLite em memória usando o driver `github.com/glebarez/sqlite` (puro Go, sem CGO). Cada teste usa DSN exclusivo (`file:<t.Name()>?mode=memory&cache=shared`) e executa `AutoMigrate` para isolar schema/dados.
+
+- Reuso do roteador de produção
+  - `src/routes/routes.go:9` define `SetupRouter`, reutilizado pelos testes para evitar divergência (DRY). `HandleRequest` apenas chama `SetupRouter` e inicia o servidor.
+
+- Utilitários de teste
+  - `src/testutil/fake_repo.go:15` implementa `FakeAlunosRepo` (repositório em memória) e `NewTestRouter` para montar o router com seed de dados.
+
+- Como rodar todos os testes
+  - Básico: `go test ./...`
+  - Verboso: `go test -v ./...`
+  - Sem cache: `go test -count=1 ./...`
+  - Data race: `go test -race ./...`
+
+- Cobertura (coverage)
+  - Resumo: `go test -cover ./...`
+  - Arquivo: `go test -coverprofile=coverage.out ./...`
+  - Funções: `go tool cover -func=coverage.out`
+  - HTML: `go tool cover -html=coverage.out -o coverage.html`
+
+- Evoluções sugeridas
+  - Testes do repositório com Postgres real (ex.: Testcontainers) para cobrir diferenças de dialeto quando necessário.
+  - Testes table-driven para ampliar cenários com pouco código repetido.
